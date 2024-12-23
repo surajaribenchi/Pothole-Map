@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pothole Map</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet/dist/leaflet.css"
+  />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script type="module">
+    // Firebase configuration
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyABljMeMvwhaE1Hqh8NHFVoVcMH7PaflOs",
+      authDomain: "pothole-locate.firebaseapp.com",
+      projectId: "pothole-locate",
+      storageBucket: "pothole-locate.firebasestorage.app",
+      messagingSenderId: "444528852731",
+      appId: "1:444528852731:web:4f9bd6377f8ecae140fa5e",
+      measurementId: "G-WCGHMSWDX1"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Initialize Map
+    const map = L.map('map').setView([20.5937, 78.9629], 5);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+    }).addTo(map);
+
+    async function loadPotholes() {
+      const querySnapshot = await getDocs(collection(db, 'potholes'));
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const { latitude, longitude, severity, volume } = data;
+
+        // Define color based on severity
+        let color;
+        switch (severity) {
+          case 'High':
+            color = 'red';
+            break;
+          case 'Mid':
+            color = 'orange';
+            break;
+          case 'Low':
+            color = 'green';
+            break;
+          default:
+            color = 'blue';
+        }
+
+        // Add marker
+        const marker = L.circleMarker([latitude, longitude], {
+          color: color,
+          radius: 8,
+          fillOpacity: 0.8,
+        }).addTo(map);
+
+        // Add popup
+        marker.bindPopup(`<b>Severity:</b> ${severity}<br><b>Volume:</b> ${volume}`);
+      });
+    }
+
+    loadPotholes();
+  </script>
+</head>
+<body>
+  <div id="map" style="height: 100vh; width: 100%;"></div>
+</body>
+</html>
